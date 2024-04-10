@@ -32,7 +32,7 @@ defmodule Truly.MixProject do
   defp deps do
     [
       {:earmark, "~> 1.4"},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:ex_doc, ">= 0.0.0", only: :docs, runtime: false}
     ]
   end
 
