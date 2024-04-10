@@ -68,6 +68,6 @@ flag_a = 0
 flag_b = 1
 flag_c = 0
 
-TruthTable.evaluate(tt,binding())
+Truly.evaluate(tt,binding())
 ```
 <!-- END MODULEDOC -->
