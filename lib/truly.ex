@@ -4,11 +4,20 @@ defmodule Truly do
   """
   import Bitwise
 
+  @type t :: %Truly{column_heads: keyword(integer()), actions_map: map()}
   defstruct [:column_heads, :actions_map]
 
   defp to_bit(value) when value in [false, 0, nil], do: 0
   defp to_bit(_value), do: 1
 
+  @spec evaluate(Truly.t(), keyword()) :: {:error, String.t()} | {:ok, atom()}
+  @doc """
+  Evaluated the truth table with the given bindings.
+
+  The bindings are any keyword list that have the corresponding column names to the
+  truth table, so you can manually pass them or pass `binding()` if the variables are
+  defined therein.
+  """
   def evaluate(%__MODULE__{} = table, bindings) do
     decimal =
       Enum.reduce_while(table.column_heads, 0, fn
@@ -38,6 +47,10 @@ defmodule Truly do
     end
   end
 
+  @spec evaluate!(Truly.t(), keyword()) :: atom()
+  @doc """
+  Same as `evaluate/2` but raises on error
+  """
   def evaluate!(%__MODULE__{} = table, bindings) do
     case evaluate(table, bindings) do
       {:ok, result} ->
@@ -183,7 +196,18 @@ defmodule Truly do
     end
   end
 
-  def sigil_TRULY(table, _opts \\ []) do
+  @spec sigil_TRULY(binary()) :: {:error, String.t()} | {:ok, Truly.t()}
+  @doc """
+  Creates a new `Truly` struct which stores the truth table. This can later be
+  evaluated against a list of bindings to get the truth value.
+
+  ## Modifiers
+
+  * `r` - This is effectively like a `!` function, that will unpack the return tuple and raise on error
+  """
+  def sigil_TRULY(table, modifiers \\ [])
+
+  def sigil_TRULY(table, []) do
     with {:ok, table_ast} <- get_table_ast(table),
          {:ok, column_heads} <- get_column_heads(table_ast),
          ncols = length(column_heads),
@@ -198,6 +222,16 @@ defmodule Truly do
       end
     else
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def sigil_TRULY(table_str, [?r]) do
+    case sigil_TRULY(table_str, []) do
+      {:ok, table} ->
+        table
+
+      {:error, error} ->
+        raise error
     end
   end
 end
