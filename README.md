@@ -50,23 +50,23 @@ columns = [:flag_a, :flag_b, :flag_c]
 categories = [:cat1, :cat2, :cat3]
 
 {:ok, tt} = ~TRULY"""
-| flag_a |  flag_b | flag_c   |          |  
-|--------|---------|----------|----------|
-|   0    |    0    |     0    |   cat1   |
-|   0    |    0    |     1    |   cat1   |
-|   0    |    1    |     0    |   cat2   |
-|   0    |    1    |     1    |   cat1   |
-|   1    |    0    |     0    |   cat3   |
-|   1    |    0    |     1    |   cat1   |
-|   1    |    1    |     0    |   cat2   |
-|   1    |    1    |     1    |   cat3   |
+| flag_a   |  flag_b | flag_c   |          |  
+|----------|---------|----------|----------|
+|   false  |   false |  false   |   cat1   |
+|   false  |   false |  true    |   cat1   |
+|   false  |   true  |  false   |   cat2   |
+|   false  |   true  |  true    |   cat1   |
+|   true   |   false |  false   |   cat3   |
+|   true   |   false |  true    |   cat1   |
+|   true   |   true  |  false   |   cat2   |
+|   true   |   true  |  true    |   cat3   |
 """
 
-Truly.evaluate!(tt,[flag_a: 1, flag_b: 1, flag_c: 1])
+Truly.evaluate!(tt,[flag_a: true, flag_b: true, flag_c: true])
 
-flag_a = 0
-flag_b = 1
-flag_c = 0
+flag_a = false
+flag_b = true
+flag_c = false
 
 Truly.evaluate(tt,binding())
 ```
@@ -112,18 +112,19 @@ defmodule PitterPatter do
 
   # Specify our truth table
   # For the sake of simplicity we stick to 3 variables
-  # Also notice that you can use `true, false, 1, 0` in the cells
+  # Also notice that you can use any existing atom (in this case the boolean atoms)
+  # in the cells
   @tt ~TRULY"""
   | dms_open |  are_friends |  locked  |                   |   
   |----------|--------------|----------|-------------------|
-  |     0    |       0      |     0    |    deny_message   |
-  |     0    |     false    |     1    |    deny_message   |
-  |     0    |       1      |     0    |    send_message   |
-  |     0    |       1      |     1    |    deny_message   |
-  |     1    |       0      |     0    |    send_message   |
-  |     1    |       0      |     1    |    deny_message   |
-  |     1    |       true   |     0    |    send_message   |
-  |     1    |       1      |     1    |    deny_message   |
+  |  false   |    false     |  false   |    deny_message   |
+  |  false   |    false     |  true    |    deny_message   |
+  |  false   |    true      |  false   |    send_message   |
+  |  false   |    true      |  true    |    deny_message   |
+  |  true    |    false     |  false   |    send_message   |
+  |  true    |    false     |  true    |    deny_message   |
+  |  true    |    true      |  false   |    send_message   |
+  |  true    |    true      |  true    |    deny_message   |
   """r # <- Notice the `r` modifier after the table
        # This is effectively like a `!` function, that will
        # unpack the return tuple and raise on error
@@ -157,4 +158,35 @@ the result changes according to the rows in the truth table.
 ```elixir
 PitterPatter.direct_message(sender, receiver, "Hey, can you talk?")
 ```
+
+## Modifiers
+
+* `r` - This is effectively like a `!` function, that will unpack the return tuple and raise on error
+* `s`  Skip validation -- when this modifier is present, we will not check that the
+         truth table is exhaustive (accounts for each possible combination based on present values).
+
+### Example With Modifiers
+
+```elixir
+import Truly
+columns = [DMS, ARE_FRIENDS, LOCKED]
+dms_open_enums = [:friends_only, :public, :closed]
+results = [:deny_message, :send_message]
+t2 = ~TRULY(
+|   DMS          |  ARE_FRIENDS |                                                  |
+|----------------|--------------|--------------------------------------------------|
+|   friends_only |     false    | error, You Must Be Friends to Message This User  |
+|   friends_only |     true     | send_message                                     |
+|   public       |     false    | send_message                                     |
+|   public       |     true     | send_message                                     |
+|   closed       |     true     | error, This User Does Not Accept Direct Messages |
+|   closed       |     false    | error, This User Does Not Accept Direct Messages |
+)rs
+```
+
+Notice that you can use any existing atom in any cell, and even add error messages in the
+result column.
+
+If the last row of the previous table were removed, it would result in an error
+due to having the `s` modifier present.
 <!-- END MODULEDOC -->
