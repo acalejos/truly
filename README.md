@@ -25,7 +25,7 @@ by adding `truly` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:truly, "~> 0.1"}
+    {:truly, "~> 0.2"}
   ]
 end
 ```
